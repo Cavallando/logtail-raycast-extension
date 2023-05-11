@@ -2,8 +2,6 @@
 
 Search and View your LogTail logs at any time
 
-![logtail](assets/extension_icon%40dark.png)
-
 ## Getting Started
 
 1. Copy your [Direct API Token](https://betterstack.com/docs/logs/api/getting-started/) from your LogTail Dashboard
