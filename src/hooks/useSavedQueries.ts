@@ -12,7 +12,7 @@ export const useSavedQueries = (): UseSavedQueriesResult => {
   const data = result.data ? JSON.parse(result.data) : [];
 
   const addQuery = async (query: string) => {
-    const newQueries: string[] = [...data, query];
+    const newQueries: string[] = Array.from(new Set([...data, query]));
     await LocalStorage.setItem(LogTail.SAVED_QUERY_CACHE_KEY, JSON.stringify(newQueries));
     result.mutate(LocalStorage.getItem<string>(LogTail.SAVED_QUERY_CACHE_KEY));
     await showToast(Toast.Style.Success, "Query saved");

@@ -5,7 +5,7 @@ import { ActionPanel, List, Action, Icon, Detail } from "@raycast/api";
 import { useState } from "react";
 import { useDefaultSourceId } from "../hooks/useDefaultSourceId";
 import { QuerySources } from "./QuerySources";
-import { getLogLevelColor, removeAnsi } from "../lib/helpers";
+import { getLogLevelColor, getQueryString, removeAnsi } from "../lib/helpers";
 import { useMetadataTags } from "../hooks/useMetadataTags";
 import { useSavedQueries } from "../hooks/useSavedQueries";
 
@@ -36,6 +36,10 @@ const SaveQueryAction = ({ onSubmit }: { onSubmit: () => void }) => {
       onSubmit={onSubmit}
     />
   );
+};
+
+const CopyRawLogAction = ({ content }: { content: string }) => {
+  return <Action.CopyToClipboard title="Copy Raw Log" content={content} shortcut={{ modifiers: ["cmd"], key: "r" }} />;
 };
 
 const DetailLogMetadata = ({ log }: { log: Log }) => {
@@ -76,15 +80,7 @@ export const QueryLogs = ({ query: _query, sourceId: _sourceId }: { query: strin
   const { data } = useDefaultSourceId();
   const [sourceId, setSourceId] = useState(_sourceId ?? data);
 
-  const getQueryString = (query?: string, sourceId?: string) => {
-    if (sourceId) {
-      return `${query ?? ""}&source_ids=${sourceId}&batch=10`;
-    } else {
-      return query ?? "";
-    }
-  };
-
-  const [query, setQuery] = useState<string>(getQueryString(_query, sourceId));
+  const [query, setQuery] = useState<string>(getQueryString(_query, sourceId).query ?? "");
 
   const renderComponent = ({ data, isLoading, mutate }: UseLogTailFetchRenderProps<LogResponse>) => {
     const { addQuery } = useSavedQueries();
@@ -99,19 +95,19 @@ export const QueryLogs = ({ query: _query, sourceId: _sourceId }: { query: strin
     };
 
     const handleQueryMessageSubmit = async (log: Log) => {
-      const queryString = getQueryString(removeAnsi(log.message), sourceId);
-      setQuery(queryString);
-      mutate(LogTail.getLogs(queryString));
+      const { query, params } = getQueryString(removeAnsi(log.message), sourceId);
+      setQuery(query ?? "");
+      mutate(LogTail.getLogs(params));
     };
 
     const handleQueryForSource = async (source: Source) => {
       setSourceId(source.id);
-      const queryString = getQueryString(query, source.id);
-      mutate(LogTail.getLogs(queryString));
+      const { params } = getQueryString(undefined, source.id);
+      mutate(LogTail.getLogs(params));
     };
 
     // If we have no log data and no source id, show the query sources
-    if (!data?.data.length && !sourceId && !isLoading) {
+    if (!sourceId) {
       return <QuerySources onSubmit={handleQueryForSource} />;
     }
 
@@ -149,16 +145,18 @@ export const QueryLogs = ({ query: _query, sourceId: _sourceId }: { query: strin
                         <CopyMessageAction content={removeAnsi(log.message)} />
                         <CopyHostAction content={log.host} />
                         <QueryMessageAction onSubmit={handleQueryMessageSubmit.bind(this, log)} />
+                        <CopyRawLogAction content={JSON.stringify(log)} />
                       </ActionPanel>
                     }
                     metadata={<DetailLogMetadata log={log} />}
                   />
                 }
               />
-              <SaveQueryAction onSubmit={handleSaveQuerySubmit} />
               <CopyHostAction content={log.host} />
               <CopyMessageAction content={removeAnsi(log.message)} />
               <QueryMessageAction onSubmit={handleQueryMessageSubmit.bind(this, log)} />
+              <CopyRawLogAction content={JSON.stringify(log)} />
+              {!!query && <SaveQueryAction onSubmit={handleSaveQuerySubmit} />}
             </ActionPanel>
           }
           accessories={accessories}
@@ -166,16 +164,26 @@ export const QueryLogs = ({ query: _query, sourceId: _sourceId }: { query: strin
       );
     };
     return (
-      <List searchText={query} isLoading={isLoading} onSearchTextChange={handleSearchTextChange}>
+      <List
+        searchText={query}
+        isLoading={isLoading}
+        onSearchTextChange={handleSearchTextChange}
+        searchBarPlaceholder="Search for Logs"
+        actions={
+          <ActionPanel>
+            <SaveQueryAction onSubmit={handleSaveQuerySubmit} />
+            <Action.Push title="Select Source" target={<QuerySources onSubmit={handleQueryForSource} />}></Action.Push>
+          </ActionPanel>
+        }
+      >
         {data?.data.map(renderLog)}
-
         {!data?.data.length && <List.EmptyView title="No logs found"></List.EmptyView>}
       </List>
     );
   };
 
   const [Component] = useLogTailFetch<LogResponse>(
-    { url: `https://logtail.com/api/v1/query?query=${getQueryString(query, sourceId)}` },
+    { url: `https://logtail.com/api/v1/query?${getQueryString(query, sourceId).params}` },
     renderComponent
   );
 

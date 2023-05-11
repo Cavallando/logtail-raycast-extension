@@ -63,7 +63,7 @@ export const QuerySources = ({ onSubmit }: { onSubmit?: (source: Source) => void
       );
     };
     return (
-      <List isLoading={isLoading}>
+      <List isLoading={isLoading} searchBarPlaceholder="Select a source to query">
         {data?.data.map(renderSource)}
         {data?.data.length && <List.EmptyView title="No sources found" />}
       </List>

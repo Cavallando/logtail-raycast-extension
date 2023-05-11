@@ -63,6 +63,7 @@ const AddMetadataTagCommand = (props: AddMetadataTagCommandProps) => {
         </ActionPanel>
       }
     >
+      <Form.Description text="Add/Edit a metadata tag to display in log details" />
       <Form.TextField
         id="key"
         title="Key"

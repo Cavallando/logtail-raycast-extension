@@ -3,12 +3,12 @@ import { useState } from "react";
 import { QueryLogs } from "./components/QueryLogs";
 import { useSavedQueries } from "./hooks/useSavedQueries";
 import { useDefaultSourceId } from "./hooks/useDefaultSourceId";
+import { getQueryString } from "./lib/helpers";
 
 const SavedQueriesCommand = () => {
   const { data: savedQueries, isLoading, removeQuery } = useSavedQueries();
   const { data: sourceIdData } = useDefaultSourceId();
 
-  const getQueryString = (query: string, sourceId?: string) => (sourceId ? `${query}&source_ids=${sourceId}` : query);
   const [query, setQuery] = useState<string>();
 
   if (query) {
@@ -28,7 +28,7 @@ const SavedQueriesCommand = () => {
                 icon={Icon.MagnifyingGlass}
                 shortcut={{ modifiers: ["cmd"], key: "q" }}
                 onSubmit={async () => {
-                  setQuery(getQueryString(query, sourceIdData));
+                  setQuery(getQueryString(query, sourceIdData).query);
                 }}
               />
               <Action.SubmitForm

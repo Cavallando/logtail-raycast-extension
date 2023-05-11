@@ -20,8 +20,9 @@ export class LogTail {
   }
 
   static getLogs(query?: string) {
+    console.log(query);
     if (query) {
-      return fetch(`${LogTail.QUERY_URL}?query=${query}`);
+      return fetch(`${LogTail.QUERY_URL}?${query}`);
     }
 
     return fetch(LogTail.QUERY_URL);
