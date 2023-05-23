@@ -64,5 +64,5 @@ export function useLogtailFetch<Response, Props = object>({ url, execute }: any,
     return { Render: renderWrapper, response };
   }
 
-  return { Render: null, response };
+  return { response };
 }
